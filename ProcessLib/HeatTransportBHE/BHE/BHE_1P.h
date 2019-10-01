@@ -15,9 +15,8 @@
 #include "BaseLib/Error.h"
 
 #include "BHECommon.h"
-#include "BHECommonUType.h"
 #include "FlowAndTemperatureControl.h"
-#include "PipeConfigurationUType.h"
+#include "PipeConfiguration1PType.h"
 
 namespace ProcessLib
 {
@@ -37,16 +36,16 @@ namespace BHE
  * sorrounding soil is regulated through the thermal resistance values, which
  * are calculated specifically during the initialization of the class.
  */
-class BHE_1P final : public BHECommonUType
+class BHE_1P final : public BHECommon
 {
 public:
     BHE_1P(BoreholeGeometry const& borehole,
            RefrigerantProperties const& refrigerant,
            GroutParameters const& grout,
            FlowAndTemperatureControl const& flowAndTemperatureControl,
-           PipeConfigurationUType const& pipes)
-        : BHECommonUType{borehole, refrigerant, grout,
-                         flowAndTemperatureControl, pipes}
+           PipeConfiguration1PType const& pipes)
+        : BHECommon{borehole, refrigerant, grout, flowAndTemperatureControl},
+          _pipe(pipes)
     {
         _thermal_resistances.fill(std::numeric_limits<double>::quiet_NaN());
 
@@ -154,9 +153,15 @@ public:
 public:
     std::array<double, number_of_unknowns> crossSectionAreas() const
     {
-        return {{_pipes.inlet.area(),
-                 borehole_geometry.area() - _pipes.inlet.area()}};
+        return {{_pipe.single_pipe.area(),
+                 borehole_geometry.area() - _pipe.single_pipe.area()}};
     }
+
+protected:
+    PipeConfiguration1PType const _pipe;
+
+    /// Flow velocity inside the pipes. Depends on the flow_rate.
+    double _flow_velocity = std::numeric_limits<double>::quiet_NaN();
 
 private:
     void updateHeatTransferCoefficients(double const flow_rate);

@@ -42,7 +42,7 @@ std::array<double, BHE_1P::number_of_unknowns> BHE_1P::pipeHeatConductions()
     double const lambda_r = refrigerant.thermal_conductivity;
     double const rho_r = refrigerant.density;
     double const Cp_r = refrigerant.specific_heat_capacity;
-    double const alpha_L = _pipes.longitudinal_dispersion_length;
+    double const alpha_L = _pipe.longitudinal_dispersion_length;
     double const porosity_g = grout.porosity_g;
     double const lambda_g = grout.lambda_g;
 
@@ -81,7 +81,7 @@ void BHE_1P::updateHeatTransferCoefficients(double const flow_rate)
 
 {
     auto const tm_flow_properties = calculateThermoMechanicalFlowPropertiesPipe(
-        _pipes.inlet, borehole_geometry.length, refrigerant, flow_rate);
+        _pipe.single_pipe, borehole_geometry.length, refrigerant, flow_rate);
 
     _flow_velocity = tm_flow_properties.velocity;
     _thermal_resistances =
@@ -92,54 +92,34 @@ void BHE_1P::updateHeatTransferCoefficients(double const flow_rate)
 std::array<double, BHE_1P::number_of_unknowns> BHE_1P::calcThermalResistances(
     double const Nu)
 {
-    constexpr double pi = boost::math::constants::pi<double>();
-
-    double const lambda_r = refrigerant.thermal_conductivity;
-    double const lambda_g = grout.lambda_g;
-    double const lambda_p = _pipes.inlet.wall_thermal_conductivity;
-
-    // thermal resistances due to advective flow of refrigerant in the _pipes
-    // Eq. 36 in Diersch_2011_CG
-    double const R_adv_i1 = 1.0 / (Nu * lambda_r * pi);
+    /*
+    // thermal resistances due to advective flow of refrigerant in the pipes
+    auto const R_advective = calculateAdvectiveThermalResistance(
+        _pipe.single_pipe, refrigerant, Nu_pipe);
 
     // thermal resistance due to thermal conductivity of the pipe wall material
-    // Eq. 49
-    double const R_con_a =
-        std::log(_pipes.outlet.diameter / _pipes.inlet.diameter) /
-        (2.0 * pi * lambda_p);
+    auto const R_conductive = calculatePipeWallThermalResistance(
+        _pipe.single_pipe);
 
-    // the average outer diameter of the _pipes
-    double const d0 = _pipes.outlet.diameter;
-    double const D = borehole_geometry.diameter;
-    // Eq. 51
-    double const chi = std::log(std::sqrt(D * D + 2 * d0 * d0) / 2 / d0) /
-                       std::log(D / std::sqrt(2) / d0);
-    // Eq. 52
-    // thermal resistances of the grout
-    double const R_g =
-        std::acosh((D * D + d0 * d0 - _pipes.distance * _pipes.distance) /
-                   (2 * D * d0)) /
-        (2 * pi * lambda_g) * (1.601 - 0.888 * _pipes.distance / D);
+    // thermal resistance due to the grout transition and grout-soil exchange.
+    auto const R = calculateGroutAndGroutSoilExchangeThermalResistance(
+        _pipe.single_pipe, grout, borehole_geometry.diameter);
 
-    // thermal resistance due to the grout transition.
-    double const R_con_b = chi * R_g;
-    // Eq. 29 and 30
-    double const R_fig = R_adv_i1 + R_con_a + R_con_b;
+    // thermal resistance due to grout-soil exchange
+    double const R_gs = R.grout_soil;
 
-    double R_gs;
-    R_gs = compute_R_gs(chi, R_g);
+    // Eq. 56 and 57
+    double const R_ff = R_advective.inner_pipe_coaxial + R_advective.a_annulus +
+                        R_conductive.inner_pipe_coaxial;
+    double const R_fg =
+        R_advective.b_annulus + R_conductive.annulus + R.conductive_b;
+    */
+
+    double const R_fig = 0.01;  // TO be calculated
+
+    double R_gs = 0.01;  // To be calculated
 
     return {{R_fig, R_gs}};
-
-    // keep the following lines------------------------------------------------
-    // when debugging the code, printing the R and phi values are needed--------
-    // std::cout << "Rfig =" << R_fig << " Rfog =" << R_fog << " Rgg =" <<
-    // R_gg << " Rgs =" << R_gs << "\n"; double phi_fig = 1.0 / (R_fig *
-    // S_i); double phi_fog = 1.0 / (R_fog * S_o); double phi_gg = 1.0 / (R_gg
-    // * S_g1); double phi_gs = 1.0 / (R_gs * S_gs); std::cout << "phi_fig ="
-    // << phi_fig << " phi_fog =" << phi_fog << " phi_gg =" << phi_gg << "
-    // phi_gs =" << phi_gs << "\n";
-    // -------------------------------------------------------------------------
 }
 
 double BHE_1P::updateFlowRateAndTemperature(double const T_out,
