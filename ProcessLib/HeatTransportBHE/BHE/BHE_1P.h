@@ -84,57 +84,31 @@ public:
         // TODO, this needs to be changed.
         switch (idx_bhe_unknowns)
         {
-            case 0:  // PHI_fig
+            case 0:  // PHI_fg
                 R_matrix.block(0, 2 * NPoints, NPoints, NPoints) +=
                     -1.0 * matBHE_loc_R;
                 R_matrix.block(2 * NPoints, 0, NPoints, NPoints) +=
                     -1.0 * matBHE_loc_R;
 
                 R_matrix.block(0, 0, NPoints, NPoints) +=
-                    1.0 * matBHE_loc_R;  // K_i1
-                R_matrix.block(2 * NPoints, 2 * NPoints, NPoints, NPoints) +=
-                    1.0 * matBHE_loc_R;  // K_ig
+                    1.0 * matBHE_loc_R;  // K_i
+                R_matrix.block(2 * NPoints,
+                               2 * NPoints,
+                               NPoints,
+                               NPoints) += 1.0 * matBHE_loc_R;  // K_ig
                 return;
-            case 1:  // PHI_fog
-                R_matrix.block(NPoints, 3 * NPoints, NPoints, NPoints) +=
-                    -1.0 * matBHE_loc_R;
-                R_matrix.block(3 * NPoints, NPoints, NPoints, NPoints) +=
-                    -1.0 * matBHE_loc_R;
-
-                R_matrix.block(NPoints, NPoints, NPoints, NPoints) +=
-                    1.0 * matBHE_loc_R;  // K_o1
-                R_matrix.block(3 * NPoints, 3 * NPoints, NPoints, NPoints) +=
-                    1.0 * matBHE_loc_R;  // K_og
-                return;
-            case 2:  // PHI_gg
-                R_matrix.block(2 * NPoints, 3 * NPoints, NPoints, NPoints) +=
-                    -1.0 * matBHE_loc_R;
-                R_matrix.block(3 * NPoints, 2 * NPoints, NPoints, NPoints) +=
-                    -1.0 * matBHE_loc_R;
-
-                R_matrix.block(2 * NPoints, 2 * NPoints, NPoints, NPoints) +=
-                    1.0 * matBHE_loc_R;  // K_ig  // notice we only have
-                                         // 1 PHI_gg term here.
-                R_matrix.block(3 * NPoints, 3 * NPoints, NPoints, NPoints) +=
-                    1.0 * matBHE_loc_R;  // K_og  // see Diersch 2013 FEFLOW
-                                         // book page 954 Table M.2
-                return;
-            case 3:  // PHI_gs
-                R_s_matrix.template block<NPoints, NPoints>(0, 0).noalias() +=
-                    1.0 * matBHE_loc_R;
+            case 1:  // PHI_gs
+                R_s_matrix += matBHE_loc_R;
 
                 R_pi_s_matrix.block(2 * NPoints, 0, NPoints, NPoints) +=
                     -1.0 * matBHE_loc_R;
-                R_pi_s_matrix.block(3 * NPoints, 0, NPoints, NPoints) +=
-                    -1.0 * matBHE_loc_R;
-                R_matrix.block(2 * NPoints, 2 * NPoints, NPoints, NPoints) +=
-                    1.0 * matBHE_loc_R;  // K_ig
-                R_matrix.block(3 * NPoints, 3 * NPoints, NPoints, NPoints) +=
-                    1.0 * matBHE_loc_R;  // K_og
+
+                R_matrix.block(2 * NPoints, 2 * NPoints, NPoints,
+                               NPoints) += matBHE_loc_R;  // K_ig
                 return;
             default:
                 OGS_FATAL(
-                    "Error!!! In the function BHE_1U::assembleRMatrices, "
+                    "Error!!! In the function BHE_1P::assembleRMatrices, "
                     "the index of bhe unknowns is out of range! ");
         }
     }

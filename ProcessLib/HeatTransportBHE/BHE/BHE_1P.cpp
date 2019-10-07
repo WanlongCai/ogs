@@ -92,34 +92,42 @@ void BHE_1P::updateHeatTransferCoefficients(double const flow_rate)
 std::array<double, BHE_1P::number_of_unknowns> BHE_1P::calcThermalResistances(
     double const Nu)
 {
-    /*
-    // thermal resistances due to advective flow of refrigerant in the pipes
-    auto const R_advective = calculateAdvectiveThermalResistance(
-        _pipe.single_pipe, refrigerant, Nu_pipe);
+    constexpr double pi = boost::math::constants::pi<double>();
+
+    double const lambda_r = refrigerant.thermal_conductivity;
+    double const lambda_g = grout.lambda_g;
+    double const lambda_p = _pipe.single_pipe.wall_thermal_conductivity;
+
+    // thermal resistances due to advective flow of refrigerant in the pipe
+    double const R_adv_i1 = 1.0 / (Nu * lambda_r * pi);
 
     // thermal resistance due to thermal conductivity of the pipe wall material
-    auto const R_conductive = calculatePipeWallThermalResistance(
-        _pipe.single_pipe);
+    double const R_con_a = std::log(_pipe.single_pipe.outsideDiameter() /
+                                    _pipe.single_pipe.diameter) /
+                           (2.0 * pi * lambda_p);
 
-    // thermal resistance due to the grout transition and grout-soil exchange.
-    auto const R = calculateGroutAndGroutSoilExchangeThermalResistance(
-        _pipe.single_pipe, grout, borehole_geometry.diameter);
+    // thermal resistances of the grout
+    double const D = borehole_geometry.diameter;
+    double const outer_pipe_outside_diameter =
+        _pipe.single_pipe.outsideDiameter();
 
-    // thermal resistance due to grout-soil exchange
-    double const R_gs = R.grout_soil;
+    double const chi =
+        std::log(std::sqrt(D * D + outer_pipe_outside_diameter *
+                                       outer_pipe_outside_diameter) /
+                 std::sqrt(2) / outer_pipe_outside_diameter) /
+        std::log(D / outer_pipe_outside_diameter);
+    double const R_g =
+        std::log(D / outer_pipe_outside_diameter) / 2 / (pi * lambda_g);
 
-    // Eq. 56 and 57
-    double const R_ff = R_advective.inner_pipe_coaxial + R_advective.a_annulus +
-                        R_conductive.inner_pipe_coaxial;
-    double const R_fg =
-        R_advective.b_annulus + R_conductive.annulus + R.conductive_b;
-    */
+    double const R_con_b = chi * R_g;
 
-    double const R_fig = 0.01;  // TO be calculated
+    // thermal resistances due to grout-soil exchange
+    double const R_gs = (1 - chi) * R_g;
 
-    double R_gs = 0.01;  // To be calculated
+    // Eq. 29 and 30
+    double const R_fg = R_adv_i1 + R_con_a + R_con_b;
 
-    return {{R_fig, R_gs}};
+    return {{R_fg, R_gs}};
 }
 
 double BHE_1P::updateFlowRateAndTemperature(double const T_out,

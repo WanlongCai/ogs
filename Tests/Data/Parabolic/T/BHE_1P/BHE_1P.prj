@@ -30,16 +30,11 @@
                         <thermal_conductivity>0.73</thermal_conductivity>
                     </grout>
                     <pipes>
-                        <outer>
+                        <inlet>
                             <diameter> 0.16626</diameter>
                             <wall_thickness>0.00587</wall_thickness>
                             <wall_thermal_conductivity>1.3</wall_thermal_conductivity>
-                        </outer>
-                        <inner>
-                            <diameter>0.09532</diameter>
-                            <wall_thickness>0.00734</wall_thickness>
-                            <wall_thermal_conductivity>1.3</wall_thermal_conductivity>
-                        </inner>
+                        </inlet>
                         <longitudinal_dispersion_length>0.001</longitudinal_dispersion_length>
                     </pipes>
                     <refrigerant>
@@ -165,7 +160,7 @@
         </processes>
         <output>
             <type>VTK</type>
-            <prefix>3D_deep_BHE_CXA</prefix>
+            <prefix>BHE_1P</prefix>
             <timesteps>
                 <pair>
                     <repeat> 1</repeat>
@@ -187,7 +182,7 @@
         <parameter>
             <name>T0_BHE1</name>
             <type>Constant</type>
-            <values>25 25 25</values>
+            <values>25 25</values>
         </parameter>
     </parameters>
     <process_variables>
@@ -201,7 +196,7 @@
         </process_variable>
         <process_variable>
             <name>temperature_BHE1</name>
-            <components>3</components>
+            <components>2</components>
             <order>1</order>
             <initial_condition>T0_BHE1</initial_condition>
         </process_variable>
