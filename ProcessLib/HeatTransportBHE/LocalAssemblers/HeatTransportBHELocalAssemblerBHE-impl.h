@@ -66,11 +66,11 @@ HeatTransportBHELocalAssemblerBHE<ShapeFunction, IntegrationMethod, BHEType>::
          idx_bhe_unknowns++)
     {
         typename ShapeMatricesType::template MatrixType<
-            single_bhe_unknowns_size, single_bhe_unknowns_size>
+            n_int_points, n_int_points>
             matBHE_loc_R = ShapeMatricesType::template MatrixType<
-                single_bhe_unknowns_size,
-                single_bhe_unknowns_size>::Zero(single_bhe_unknowns_size,
-                                                single_bhe_unknowns_size);
+                n_int_points,
+                n_int_points>::Zero(n_int_points,
+                                                n_int_points);
         // Loop over Gauss points
         for (unsigned ip = 0; ip < n_integration_points; ip++)
         {
@@ -156,25 +156,25 @@ void HeatTransportBHELocalAssemblerBHE<ShapeFunction, IntegrationMethod,
 
             int const single_bhe_unknowns_index =
                 bhe_unknowns_index +
-                single_bhe_unknowns_size * idx_bhe_unknowns;
+                n_int_points * idx_bhe_unknowns;
             // local M
             local_M
-                .template block<single_bhe_unknowns_size,
-                                single_bhe_unknowns_size>(
+                .template block<n_int_points,
+                                n_int_points>(
                     single_bhe_unknowns_index, single_bhe_unknowns_index)
                 .noalias() += N.transpose() * N * mass_coeff * A * w;
 
             // local K
             // laplace part
             local_K
-                .template block<single_bhe_unknowns_size,
-                                single_bhe_unknowns_size>(
+                .template block<n_int_points,
+                                n_int_points>(
                     single_bhe_unknowns_index, single_bhe_unknowns_index)
                 .noalias() += dNdx.transpose() * dNdx * lambda * A * w;
             // advection part
             local_K
-                .template block<single_bhe_unknowns_size,
-                                single_bhe_unknowns_size>(
+                .template block<n_int_points,
+                                n_int_points>(
                     single_bhe_unknowns_index, single_bhe_unknowns_index)
                 .noalias() +=
                 N.transpose() * advection_vector.transpose() * dNdx * A * w;
