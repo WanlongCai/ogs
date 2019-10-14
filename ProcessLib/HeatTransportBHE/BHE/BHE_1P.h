@@ -81,35 +81,34 @@ public:
         Eigen::MatrixBase<RPiSMatrixType>& R_pi_s_matrix,
         Eigen::MatrixBase<RSMatrixType>& R_s_matrix) const
     {
-        // TODO, this needs to be changed.
+        // Here we are looping over two resistance terms
+        // First PHI_ig is the resistance between pipe and grout
+        // Second PHI_gs is the resistance between grout and soil
         switch (idx_bhe_unknowns)
         {
-            case 0:  // PHI_fg
-                R_matrix.block(0, 2 * NPoints, NPoints, NPoints) +=
+            case 0:  // PHI_ig
+                R_matrix.block(0, NPoints, NPoints, NPoints) +=
                     -1.0 * matBHE_loc_R;
-                R_matrix.block(2 * NPoints, 0, NPoints, NPoints) +=
+                R_matrix.block(NPoints, 0, NPoints, NPoints) +=
                     -1.0 * matBHE_loc_R;
 
-                R_matrix.block(0, 0, NPoints, NPoints) +=
-                    1.0 * matBHE_loc_R;  // K_i
-                R_matrix.block(2 * NPoints,
-                               2 * NPoints,
-                               NPoints,
-                               NPoints) += 1.0 * matBHE_loc_R;  // K_ig
+                R_matrix.block(0, 0, NPoints, NPoints) += matBHE_loc_R;
+                R_matrix.block(NPoints, NPoints, NPoints, NPoints) +=
+                    matBHE_loc_R;
                 return;
             case 1:  // PHI_gs
                 R_s_matrix += matBHE_loc_R;
 
-                R_pi_s_matrix.block(2 * NPoints, 0, NPoints, NPoints) +=
+                R_pi_s_matrix.block(NPoints, 0, NPoints, NPoints) +=
                     -1.0 * matBHE_loc_R;
 
-                R_matrix.block(2 * NPoints, 2 * NPoints, NPoints,
-                               NPoints) += matBHE_loc_R;  // K_ig
+                R_matrix.block(NPoints, NPoints, NPoints, NPoints) +=
+                    matBHE_loc_R;
                 return;
             default:
                 OGS_FATAL(
                     "Error!!! In the function BHE_1P::assembleRMatrices, "
-                    "the index of bhe unknowns is out of range! ");
+                    "the index of bhe resistance term is out of range! ");
         }
     }
 
