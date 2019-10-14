@@ -49,9 +49,7 @@ std::array<double, BHE_1P::number_of_unknowns> BHE_1P::pipeHeatConductions()
     double const velocity_norm = std::abs(_flow_velocity) * std::sqrt(2);
 
     // Here we calculate the laplace coefficients in the governing
-    // equations of BHE. These governing equations can be found in
-    // 1) Diersch (2013) FEFLOW book on page 952, M.120-122, or
-    // 2) Diersch (2011) Comp & Geosci 37:1122-1135, Eq. 19-22.
+    // equations of the BHE.
     return {{
         // pipe, Eq. 19
         (lambda_r + rho_r * Cp_r * alpha_L * velocity_norm),
@@ -122,7 +120,7 @@ std::array<double, BHE_1P::number_of_unknowns> BHE_1P::calcThermalResistances(
     double const R_con_b = chi * R_g;
 
     // thermal resistances due to grout-soil exchange
-    double const R_gs = (1 - chi) * R_g;
+    double const R_gs = compute_R_gs(chi, R_g);
 
     // Eq. 29 and 30
     double const R_fg = R_adv_i1 + R_con_a + R_con_b;

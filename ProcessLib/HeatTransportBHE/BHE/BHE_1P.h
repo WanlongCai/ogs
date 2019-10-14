@@ -82,19 +82,20 @@ public:
         Eigen::MatrixBase<RSMatrixType>& R_s_matrix) const
     {
         // Here we are looping over two resistance terms
-        // First PHI_ig is the resistance between pipe and grout
+        // First PHI_fg is the resistance between pipe and grout
         // Second PHI_gs is the resistance between grout and soil
         switch (idx_bhe_unknowns)
         {
-            case 0:  // PHI_ig
+            case 0:  // PHI_fg
                 R_matrix.block(0, NPoints, NPoints, NPoints) +=
                     -1.0 * matBHE_loc_R;
                 R_matrix.block(NPoints, 0, NPoints, NPoints) +=
                     -1.0 * matBHE_loc_R;
 
-                R_matrix.block(0, 0, NPoints, NPoints) += matBHE_loc_R;
+                R_matrix.block(0, 0, NPoints, NPoints) +=
+                    matBHE_loc_R;  // K_i/o
                 R_matrix.block(NPoints, NPoints, NPoints, NPoints) +=
-                    matBHE_loc_R;
+                    matBHE_loc_R;  // K_fg
                 return;
             case 1:  // PHI_gs
                 R_s_matrix += matBHE_loc_R;
@@ -103,7 +104,7 @@ public:
                     -1.0 * matBHE_loc_R;
 
                 R_matrix.block(NPoints, NPoints, NPoints, NPoints) +=
-                    matBHE_loc_R;
+                    matBHE_loc_R;  // K_fg
                 return;
             default:
                 OGS_FATAL(
@@ -121,13 +122,13 @@ public:
     }
 
     static constexpr std::pair<int, int> inflow_outflow_bc_component_ids[] = {
-        {0, 1}};
+        {0, 0}};
 
 public:
     std::array<double, number_of_unknowns> crossSectionAreas() const
     {
         return {{_pipe.single_pipe.area(),
-                 borehole_geometry.area() - _pipe.single_pipe.area()}};
+                 borehole_geometry.area() - _pipe.single_pipe.outsideArea()}};
     }
 
 protected:
@@ -145,12 +146,9 @@ private:
     double compute_R_gs(double const chi, double const R_g);
 
 private:
-    /// PHI_fig, PHI_gs;
+    /// PHI_fg, PHI_gs;
     /// Here we store the thermal resistances needed for computation of the heat
     /// exchange coefficients in the governing equations of BHE.
-    /// These governing equations can be found in
-    /// 1) Diersch (2013) FEFLOW book on page 958, M.3, or
-    /// 2) Diersch (2011) Comp & Geosci 37:1122-1135, Eq. 90-97.
     std::array<double, number_of_unknowns> _thermal_resistances;
 };
 }  // namespace BHE
