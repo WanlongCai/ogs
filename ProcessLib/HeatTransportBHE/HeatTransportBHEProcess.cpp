@@ -283,14 +283,26 @@ void HeatTransportBHEProcess::createBHEBoundaryConditionTopBottom(
         // the BHE temperature is therefore bhe_i + 1
         const int variable_id = bhe_i + 1;
 
-        // Bottom and top nodes w.r.t. the z coordinate.
-        auto const bottom_top_nodes = std::minmax_element(
-            begin(bhe_nodes), end(bhe_nodes),
-            [&](auto const& a, auto const& b) {
-                return a->getCoords()[2] < b->getCoords()[2];
-            });
-        auto const bc_bottom_node_id = (*bottom_top_nodes.first)->getID();
-        auto const bc_top_node_id = (*bottom_top_nodes.second)->getID();
+        std::vector<MeshLib::Node*> bhe_boundary_nodes;
+        // there are 7 elements connected to bhe boundary node
+        // if the bhe boundary node is located on the surface,
+        // and 13 elements are connected to the bhe boundary nodes
+        // for ones situated in soil.
+        const int num_elem_connected_bhe_boundary_node_surface = 7,
+                  num_elem_connected_bhe_boundary_node_soil = 13;
+        for (auto const& bhe_node : bhe_nodes)
+        {
+            auto const num_connected_elems = bhe_node->getNumberOfElements();
+            if (num_connected_elems ==
+                    num_elem_connected_bhe_boundary_node_surface ||
+                num_connected_elems ==
+                    num_elem_connected_bhe_boundary_node_soil)
+                bhe_boundary_nodes.push_back(bhe_node);
+        }
+
+        assert(bhe_boundary_nodes.size() == 2);
+        auto const bc_bottom_node_id = bhe_boundary_nodes[1]->getID();
+        auto const bc_top_node_id = bhe_boundary_nodes[0]->getID();
 
         auto get_global_bhe_bc_indices =
             [&](std::size_t const node_id,
