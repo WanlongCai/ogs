@@ -46,13 +46,11 @@ std::array<double, BHE_1P::number_of_unknowns> BHE_1P::pipeHeatConductions()
     double const porosity_g = grout.porosity_g;
     double const lambda_g = grout.lambda_g;
 
-    double const velocity_norm = std::abs(_flow_velocity) * std::sqrt(2);
-
     // Here we calculate the laplace coefficients in the governing
     // equations of the BHE.
     return {{
         // pipe, Eq. 19
-        (lambda_r + rho_r * Cp_r * alpha_L * velocity_norm),
+        (lambda_r + rho_r * Cp_r * alpha_L * _flow_velocity),
         // grout, Eq. 21
         (1.0 - porosity_g) * lambda_g,
     }};
