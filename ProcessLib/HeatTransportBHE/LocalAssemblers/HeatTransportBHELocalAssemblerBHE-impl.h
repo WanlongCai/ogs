@@ -138,7 +138,7 @@ void HeatTransportBHELocalAssemblerBHE<ShapeFunction, IntegrationMethod,
 
     auto const& pipe_heat_capacities = _bhe.pipeHeatCapacities();
     auto const& pipe_heat_conductions = _bhe.pipeHeatConductions();
-    auto const& pipe_advection_vectors = _bhe.pipeAdvectionVectors();
+    auto const& pipe_advection_vectors = _bhe.pipeAdvectionVectors(_element_direction_vector);
     auto const& cross_section_areas = _bhe.crossSectionAreas();
 
     // the mass and conductance matrix terms

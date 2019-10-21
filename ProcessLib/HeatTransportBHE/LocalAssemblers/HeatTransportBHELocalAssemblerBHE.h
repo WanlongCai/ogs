@@ -90,8 +90,7 @@ private:
 
     SecondaryData<typename ShapeMatrices::ShapeType> _secondary_data;
 
-    typename ShapeMatricesType::template VectorType<3>
-        _element_direction_vector;
+    Eigen::Vector3d _element_direction_vector;
 
     typename ShapeMatricesType::template MatrixType<bhe_unknowns_size,
                                                     bhe_unknowns_size>
