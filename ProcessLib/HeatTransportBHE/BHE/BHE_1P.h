@@ -122,7 +122,7 @@ public:
     }
 
     static constexpr std::pair<int, int> inflow_outflow_bc_component_ids[] = {
-        {0, 0}};
+        {0, 1}};
 
 public:
     std::array<double, number_of_unknowns> crossSectionAreas() const

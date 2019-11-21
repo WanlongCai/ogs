@@ -284,25 +284,36 @@ void HeatTransportBHEProcess::createBHEBoundaryConditionTopBottom(
         const int variable_id = bhe_i + 1;
 
         std::vector<MeshLib::Node*> bhe_boundary_nodes;
-        // there are 7 elements connected to bhe boundary node
-        // if the bhe boundary node is located on the surface,
-        // and 13 elements are connected to the bhe boundary nodes
-        // for ones situated in soil.
-        const int num_elem_connected_bhe_boundary_node_surface = 7,
-                  num_elem_connected_bhe_boundary_node_soil = 13;
+        // cherry-pick the boundary nodes according to
+        // the number of connected line elements.
         for (auto const& bhe_node : bhe_nodes)
         {
-            auto const num_connected_elems = bhe_node->getNumberOfElements();
-            if (num_connected_elems ==
-                    num_elem_connected_bhe_boundary_node_surface ||
-                num_connected_elems ==
-                    num_elem_connected_bhe_boundary_node_soil)
+            auto const connected_elems = bhe_node->getElements();
+
+            int cnt = 0;
+
+            for (auto const element : connected_elems)
+            {
+                if (element->getDimension() == 1)
+                {
+                    cnt++;
+                }
+            }
+            if (cnt == 1)
+            {
                 bhe_boundary_nodes.push_back(bhe_node);
+            }
         }
 
-        assert(bhe_boundary_nodes.size() == 2);
-        auto const bc_bottom_node_id = bhe_boundary_nodes[1]->getID();
+        if (bhe_boundary_nodes.size() != 2)
+        {
+            OGS_FATAL(
+                "Error!!! The BHE boundary nodes are not correctly found, "
+                "for every single BHE, there should be 2 boundary nodes.");
+        }
+
         auto const bc_top_node_id = bhe_boundary_nodes[0]->getID();
+        auto const bc_bottom_node_id = bhe_boundary_nodes[1]->getID();
 
         auto get_global_bhe_bc_indices =
             [&](std::size_t const node_id,
@@ -315,6 +326,23 @@ void HeatTransportBHEProcess::createBHEBoundaryConditionTopBottom(
                         {_mesh.getID(), MeshLib::MeshItemType::Node, node_id},
                         variable_id, in_out_component_id.second));
             };
+        auto get_global_bhe_1P_bc_indices =
+            [&](std::size_t const top_node_id,
+                std::size_t const bottom_node_id) {
+                return std::make_pair(
+                    _local_to_global_index_map->getGlobalIndex(
+                        {_mesh.getID(), MeshLib::MeshItemType::Node,
+                         top_node_id},
+                        variable_id),
+                    _local_to_global_index_map->getGlobalIndex(
+                        {_mesh.getID(), MeshLib::MeshItemType::Node,
+                         bottom_node_id},
+                        variable_id));
+            };
+
+        auto number_of_unknowns =
+            visit([](auto const& bhe) { return bhe.number_of_unknowns; },
+                  _process_data._vec_BHE_property[bhe_i]);
 
         auto createBCs = [&](auto& bhe) {
             for (auto const& in_out_component_id :
@@ -349,19 +377,41 @@ void HeatTransportBHEProcess::createBHEBoundaryConditionTopBottom(
                 else
                 {
                     // Top, inflow, normal case
-                    bcs.addBoundaryCondition(
-                        createBHEInflowDirichletBoundaryCondition(
-                            get_global_bhe_bc_indices(bc_top_node_id,
-                                                      in_out_component_id),
-                            [&bhe](double const T, double const t) {
-                                return bhe.updateFlowRateAndTemperature(T, t);
-                            }));
+                    // The single pipe (1P type) flow process has 2 primary
+                    // variables. Its inflow and outflow nodes are different.
+                    static constexpr int number_of_unknowns_for_1P_type = 2;
+                    // Top, inflow.
+                    if (number_of_unknowns == number_of_unknowns_for_1P_type)
+                    {
+                        bcs.addBoundaryCondition(
+                            createBHEInflowDirichletBoundaryCondition(
+                                get_global_bhe_1P_bc_indices(bc_top_node_id,
+                                                             bc_bottom_node_id),
+                                [&bhe](double const T, double const t) {
+                                    return bhe.updateFlowRateAndTemperature(T,
+                                                                            t);
+                                }));
+                    }
+                    else
+                    {
+                        bcs.addBoundaryCondition(
+                            createBHEInflowDirichletBoundaryCondition(
+                                get_global_bhe_bc_indices(bc_top_node_id,
+                                                          in_out_component_id),
+                                [&bhe](double const T, double const t) {
+                                    return bhe.updateFlowRateAndTemperature(T,
+                                                                            t);
+                                }));
                 }
                 // Bottom, outflow, all cases
-                bcs.addBoundaryCondition(
-                    createBHEBottomDirichletBoundaryCondition(
-                        get_global_bhe_bc_indices(bc_bottom_node_id,
-                                                  in_out_component_id)));
+                if (number_of_unknowns != number_of_unknowns_for_1P_type)
+                {
+                    // Bottom, outflow.
+                    bcs.addBoundaryCondition(
+                        createBHEBottomDirichletBoundaryCondition(
+                            get_global_bhe_bc_indices(bc_bottom_node_id,
+                                                      in_out_component_id)));
+                }
             }
         };
         visit(createBCs, _process_data._vec_BHE_property[bhe_i]);
