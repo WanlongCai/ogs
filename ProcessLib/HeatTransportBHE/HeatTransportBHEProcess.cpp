@@ -413,6 +413,7 @@ void HeatTransportBHEProcess::createBHEBoundaryConditionTopBottom(
                                                       in_out_component_id)));
                 }
             }
+            }
         };
         visit(createBCs, _process_data._vec_BHE_property[bhe_i]);
     }
