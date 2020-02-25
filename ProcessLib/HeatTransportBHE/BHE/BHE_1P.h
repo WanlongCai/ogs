@@ -44,9 +44,9 @@ public:
            GroutParameters const& grout,
            FlowAndTemperatureControl const& flowAndTemperatureControl,
            PipeConfiguration1PType const& pipes,
-           bool const usePythonBC)
+           bool const use_python_bcs)
         : BHECommon{borehole, refrigerant, grout, flowAndTemperatureControl,
-                    usePythonBC},
+                    use_python_bcs},
           _pipe(pipes)
     {
         _thermal_resistances.fill(std::numeric_limits<double>::quiet_NaN());
@@ -133,6 +133,8 @@ public:
                  borehole_geometry.area() - _pipe.single_pipe.outsideArea()}};
     }
 
+    void updateHeatTransferCoefficients(double const flow_rate);
+
 protected:
     PipeConfiguration1PType const _pipe;
 
@@ -140,8 +142,6 @@ protected:
     double _flow_velocity = std::numeric_limits<double>::quiet_NaN();
 
 private:
-    void updateHeatTransferCoefficients(double const flow_rate);
-
     std::array<double, number_of_unknowns> calcThermalResistances(
         double const Nu);
 
