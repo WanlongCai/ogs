@@ -348,6 +348,11 @@ void HeatTransportBHEProcess::createBHEBoundaryConditionTopBottom(
             for (auto const& in_out_component_id :
                  bhe.inflow_outflow_bc_component_ids)
             {
+                // Top, inflow, normal case
+                // The single pipe (1P type) flow process has 2 primary
+                // variables. Its inflow and outflow nodes are different.
+                static constexpr int number_of_unknowns_for_1P_type = 2;
+
                 if (bhe.use_python_bcs)
                 // call BHEPythonBoundarycondition
                 {
@@ -376,10 +381,6 @@ void HeatTransportBHEProcess::createBHEBoundaryConditionTopBottom(
                 }
                 else
                 {
-                    // Top, inflow, normal case
-                    // The single pipe (1P type) flow process has 2 primary
-                    // variables. Its inflow and outflow nodes are different.
-                    static constexpr int number_of_unknowns_for_1P_type = 2;
                     // Top, inflow.
                     if (number_of_unknowns == number_of_unknowns_for_1P_type)
                     {
@@ -402,8 +403,9 @@ void HeatTransportBHEProcess::createBHEBoundaryConditionTopBottom(
                                     return bhe.updateFlowRateAndTemperature(T,
                                                                             t);
                                 }));
+                    }
                 }
-                // Bottom, outflow, all cases
+                // Bottom, outflow, all cases except single flow process
                 if (number_of_unknowns != number_of_unknowns_for_1P_type)
                 {
                     // Bottom, outflow.
@@ -412,7 +414,6 @@ void HeatTransportBHEProcess::createBHEBoundaryConditionTopBottom(
                             get_global_bhe_bc_indices(bc_bottom_node_id,
                                                       in_out_component_id)));
                 }
-            }
             }
         };
         visit(createBCs, _process_data._vec_BHE_property[bhe_i]);
